@@ -1,16 +1,18 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 
 	"github.com/ThEditor/clutter-studio/internal/log"
+	"github.com/ThEditor/clutter-studio/internal/repository"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 )
 
-func Start(address string, port int) {
+func Start(ctx context.Context, address string, port int, repo *repository.Queries) {
 	r := chi.NewRouter()
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:5173", "http://127.0.0.1:5173"},
