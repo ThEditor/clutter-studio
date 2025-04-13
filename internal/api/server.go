@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/ThEditor/clutter-studio/internal/api/common"
+	"github.com/ThEditor/clutter-studio/internal/api/routes"
 	"github.com/ThEditor/clutter-studio/internal/log"
 	"github.com/ThEditor/clutter-studio/internal/repository"
 	"github.com/go-chi/chi/v5"
@@ -13,6 +15,11 @@ import (
 )
 
 func Start(ctx context.Context, address string, port int, repo *repository.Queries) {
+	s := &common.Server{
+		Ctx:  ctx,
+		Repo: repo,
+	}
+
 	r := chi.NewRouter()
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:5173", "http://127.0.0.1:5173"},
@@ -26,6 +33,8 @@ func Start(ctx context.Context, address string, port int, repo *repository.Queri
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hello World!"))
 	})
+
+	r.Mount("/users", routes.UsersRouter(s))
 
 	log.Info("API server listening on " + address + ":" + strconv.Itoa(port))
 	err := http.ListenAndServe(address+":"+strconv.Itoa(port), r)
