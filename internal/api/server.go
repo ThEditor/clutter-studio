@@ -34,6 +34,7 @@ func Start(ctx context.Context, address string, port int, repo *repository.Queri
 		w.Write([]byte("Hello World!"))
 	})
 
+	r.Mount("/auth", routes.AuthRouter(s))
 	r.Mount("/users", routes.UsersRouter(s))
 
 	log.Info("API server listening on " + address + ":" + strconv.Itoa(port))

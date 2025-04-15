@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/ThEditor/clutter-studio/internal/repository"
+	"github.com/go-playground/validator/v10"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -19,3 +20,5 @@ func HashPassword(pass string) (string, error) {
 	}
 	return string(hashedPassword), nil
 }
+
+var Validate = validator.New()
