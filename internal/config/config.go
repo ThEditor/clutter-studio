@@ -6,10 +6,12 @@ import (
 )
 
 type Config struct {
+	APP_NAME     string
 	DATABASE_URL string
 	BIND_ADDRESS string
 	PORT         int
 	DEBUG        bool
+	JWT_SECRET   string
 }
 
 var config *Config
@@ -17,10 +19,12 @@ var config *Config
 func Load() *Config {
 	if config == nil {
 		config = &Config{
+			APP_NAME:     getEnvAsString("APP_NAME", "clutter"),
 			DATABASE_URL: getEnvAsString("DATABASE_URL", "postgres://admin:admin@localhost:5432/mydb?sslmode=disable"),
 			BIND_ADDRESS: getEnvAsString("BIND_ADDRESS", "127.0.0.1"),
 			PORT:         getEnvAsInt("PORT", 8081),
 			DEBUG:        getEnvAsBool("DEBUG", false),
+			JWT_SECRET:   getEnvAsString("JWT_SECRET", "supersecretkey"),
 		}
 	}
 	return config

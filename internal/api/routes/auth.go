@@ -52,10 +52,16 @@ func AuthRouter(s *common.Server) http.Handler {
 			return
 		}
 
-		// TODO: Return signed JWT
+		jwt, err := common.CreateJWT(user.ID, user.Email)
+
+		if err != nil {
+			http.Error(w, "Failed creating JWT", http.StatusInternalServerError)
+			return
+		}
 
 		json.NewEncoder(w).Encode(map[string]string{
-			"message": "User " + user.Username + " created successfully!",
+			"message":      "Successfully created!",
+			"access_token": jwt,
 		})
 	})
 
@@ -84,10 +90,16 @@ func AuthRouter(s *common.Server) http.Handler {
 			return
 		}
 
-		// TODO: Return signed JWT
+		jwt, err := common.CreateJWT(user.ID, user.Email)
+
+		if err != nil {
+			http.Error(w, "Failed creating JWT", http.StatusInternalServerError)
+			return
+		}
 
 		json.NewEncoder(w).Encode(map[string]string{
-			"message": "Correct credentials!",
+			"message":      "Successfully logged in!",
+			"access_token": jwt,
 		})
 	})
 
