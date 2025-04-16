@@ -26,6 +26,10 @@ func HashPassword(pass string) (string, error) {
 	return string(hashedPassword), nil
 }
 
+func CheckPasswordHash(passHash string, reqPass string) bool {
+	return bcrypt.CompareHashAndPassword([]byte(passHash), []byte(reqPass)) == nil
+}
+
 var Validate = validator.New()
 
 // JWT

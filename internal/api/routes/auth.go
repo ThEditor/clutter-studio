@@ -77,15 +77,9 @@ func AuthRouter(s *common.Server) http.Handler {
 			return
 		}
 
-		hashedPassword, err := common.HashPassword(req.Password)
-		if err != nil {
-			http.Error(w, "Failed to hash password", http.StatusInternalServerError)
-			return
-		}
-
 		user, err := s.Repo.FindPlayerByEmail(s.Ctx, req.Email)
 
-		if err != nil || user.Passhash != hashedPassword {
+		if err != nil || !common.CheckPasswordHash(user.Passhash, req.Password) {
 			http.Error(w, "Invalid credentials", http.StatusUnauthorized)
 			return
 		}
