@@ -9,12 +9,6 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-type CreateUserRequest struct {
-	Username string `json:"username" validate:"required,min=2"`
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required,min=6"`
-}
-
 func UsersRouter(s *common.Server) http.Handler {
 	r := chi.NewRouter()
 	r.Use(middlewares.AuthMiddleware)
