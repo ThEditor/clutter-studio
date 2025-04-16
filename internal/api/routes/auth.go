@@ -41,7 +41,7 @@ func AuthRouter(s *common.Server) http.Handler {
 			return
 		}
 
-		user, err := s.Repo.Create(s.Ctx, repository.CreateParams{
+		user, err := s.Repo.CreateUser(s.Ctx, repository.CreateUserParams{
 			Username: req.Username,
 			Email:    req.Email,
 			Passhash: hashedPassword,
@@ -77,7 +77,7 @@ func AuthRouter(s *common.Server) http.Handler {
 			return
 		}
 
-		user, err := s.Repo.FindPlayerByEmail(s.Ctx, req.Email)
+		user, err := s.Repo.FindUserByEmail(s.Ctx, req.Email)
 
 		if err != nil || !common.CheckPasswordHash(user.Passhash, req.Password) {
 			http.Error(w, "Invalid credentials", http.StatusUnauthorized)

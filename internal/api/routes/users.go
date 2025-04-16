@@ -20,7 +20,7 @@ func UsersRouter(s *common.Server) http.Handler {
 			return
 		}
 
-		user, err := s.Repo.FindPlayerByID(s.Ctx, claims.UserID)
+		user, err := s.Repo.FindUserByID(s.Ctx, claims.UserID)
 		if err != nil {
 			http.Error(w, "Cannot find user", http.StatusInternalServerError)
 			return
