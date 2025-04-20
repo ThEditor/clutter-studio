@@ -10,8 +10,9 @@ CREATE TABLE Users (
 CREATE TABLE Sites (
   id UUID PRIMARY KEY,
   user_id UUID NOT NULL,
-  site_url VARCHAR(255) NOT NULL UNIQUE,
+  site_url VARCHAR(255) NOT NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  FOREIGN KEY (user_id) REFERENCES Users(id)
+  FOREIGN KEY (user_id) REFERENCES Users(id),
+  CONSTRAINT unique_user_site_url UNIQUE (user_id, site_url)
 );
