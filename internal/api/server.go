@@ -36,6 +36,7 @@ func Start(ctx context.Context, address string, port int, repo *repository.Queri
 
 	r.Mount("/auth", routes.AuthRouter(s))
 	r.Mount("/users", routes.UsersRouter(s))
+	r.Mount("/sites", routes.SitesRouter(s))
 
 	log.Info("API server listening on " + address + ":" + strconv.Itoa(port))
 	err := http.ListenAndServe(address+":"+strconv.Itoa(port), r)
