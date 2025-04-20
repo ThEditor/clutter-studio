@@ -7,6 +7,7 @@ import (
 
 	"github.com/ThEditor/clutter-studio/internal/config"
 	"github.com/ThEditor/clutter-studio/internal/repository"
+	"github.com/ThEditor/clutter-studio/internal/storage"
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -14,8 +15,9 @@ import (
 )
 
 type Server struct {
-	Ctx  context.Context
-	Repo *repository.Queries
+	Ctx        context.Context
+	Repo       *repository.Queries
+	ClickHouse *storage.ClickHouseStorage
 }
 
 func HashPassword(pass string) (string, error) {
