@@ -74,7 +74,7 @@ func SitesRouter(s *common.Server) http.Handler {
 		sites, err := s.Repo.ListSitesByUserID(s.Ctx, claims.UserID)
 
 		if err != nil {
-			http.Error(w, "Couldn't fetch list of sites", http.StatusInternalServerError)
+			http.Error(w, "Couldn't fetch list of sites", http.StatusNotFound)
 			return
 		}
 
@@ -97,7 +97,7 @@ func SitesRouter(s *common.Server) http.Handler {
 		site, err := s.Repo.FindSiteByID(s.Ctx, siteId)
 
 		if err != nil {
-			http.Error(w, "Couldn't find site", http.StatusInternalServerError)
+			http.Error(w, "Couldn't find site", http.StatusNotFound)
 			return
 		}
 
@@ -125,7 +125,7 @@ func SitesRouter(s *common.Server) http.Handler {
 		site, err := s.Repo.FindSiteByID(s.Ctx, siteId)
 
 		if err != nil {
-			http.Error(w, "Couldn't find site", http.StatusInternalServerError)
+			http.Error(w, "Couldn't find site", http.StatusNotFound)
 			return
 		}
 
@@ -165,7 +165,7 @@ func SitesRouter(s *common.Server) http.Handler {
 		site, err := s.Repo.FindSiteByID(s.Ctx, siteId)
 
 		if err != nil {
-			http.Error(w, "Couldn't find site", http.StatusInternalServerError)
+			http.Error(w, "Couldn't find site", http.StatusNotFound)
 			return
 		}
 
