@@ -149,5 +149,40 @@ func SitesRouter(s *common.Server) http.Handler {
 		})
 	})
 
+	r.Get("/{id}/analytics", func(w http.ResponseWriter, r *http.Request) {
+		claims, ok := r.Context().Value(middlewares.ClaimsKey).(*common.Claims)
+		if !ok {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		siteId, err := uuid.Parse(chi.URLParam(r, "id"))
+		if err != nil {
+			http.Error(w, "Invalid UUID", http.StatusBadRequest)
+			return
+		}
+
+		site, err := s.Repo.FindSiteByID(s.Ctx, siteId)
+
+		if err != nil {
+			http.Error(w, "Couldn't find site", http.StatusInternalServerError)
+			return
+		}
+
+		if site.UserID != claims.UserID {
+			http.Error(w, "You do not have access to this site", http.StatusForbidden)
+			return
+		}
+
+		data, err := s.ClickHouse.GetSiteEventData(site.ID)
+
+		if err != nil || data == nil {
+			http.Error(w, "Couldn't find analytics data for site", http.StatusNotFound)
+			return
+		}
+
+		json.NewEncoder(w).Encode(data)
+	})
+
 	return r
 }
