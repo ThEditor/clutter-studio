@@ -59,6 +59,8 @@ func AuthRouter(s *common.Server) http.Handler {
 			return
 		}
 
+		common.AttachJWTCookie(w, jwt)
+
 		json.NewEncoder(w).Encode(map[string]string{
 			"message":      "Successfully created!",
 			"access_token": jwt,
@@ -90,6 +92,8 @@ func AuthRouter(s *common.Server) http.Handler {
 			http.Error(w, "Failed creating JWT", http.StatusInternalServerError)
 			return
 		}
+
+		common.AttachJWTCookie(w, jwt)
 
 		json.NewEncoder(w).Encode(map[string]string{
 			"message":      "Successfully logged in!",

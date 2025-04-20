@@ -2,8 +2,8 @@ package middlewares
 
 import (
 	"context"
+	"errors"
 	"net/http"
-	"strings"
 
 	"github.com/ThEditor/clutter-studio/internal/api/common"
 )
@@ -14,12 +14,19 @@ const ClaimsKey contextKey = "claims"
 
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
-			http.Error(w, "Authorization header required", http.StatusUnauthorized)
+		cookie, err := r.Cookie("accessToken")
+
+		if err != nil {
+			switch {
+			case errors.Is(err, http.ErrNoCookie):
+				http.Error(w, "cookie not found", http.StatusBadRequest)
+			default:
+				http.Error(w, "server error", http.StatusInternalServerError)
+			}
 			return
 		}
-		tokenString := strings.Replace(authHeader, "Bearer ", "", 1)
+
+		tokenString := cookie.Value
 
 		claims, err := common.VerifyToken(tokenString)
 		if err != nil {

@@ -3,6 +3,7 @@ package common
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/ThEditor/clutter-studio/internal/config"
@@ -34,6 +35,8 @@ func CheckPasswordHash(passHash string, reqPass string) bool {
 
 var Validate = validator.New()
 
+const expirationDuration = 24 * time.Hour
+
 // JWT
 
 type Claims struct {
@@ -44,7 +47,7 @@ type Claims struct {
 
 func CreateJWT(userID uuid.UUID, email string) (string, error) {
 	cfg := config.Get()
-	expirationTime := time.Now().Add(24 * time.Hour)
+	expirationTime := time.Now().Add(expirationDuration)
 
 	claims := &Claims{
 		UserID: userID,
@@ -86,4 +89,20 @@ func VerifyToken(tokenString string) (*Claims, error) {
 	}
 
 	return claims, nil
+}
+
+func AttachJWTCookie(w http.ResponseWriter, jwt string) {
+	cfg := config.Get()
+
+	cookie := http.Cookie{
+		Name:     "accessToken",
+		Value:    jwt,
+		Path:     "/",
+		MaxAge:   int(expirationDuration.Seconds()),
+		HttpOnly: true,
+		Secure:   !cfg.DEV_MODE,
+		SameSite: http.SameSiteLaxMode,
+	}
+
+	http.SetCookie(w, &cookie)
 }

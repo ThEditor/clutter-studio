@@ -13,6 +13,7 @@ type Config struct {
 	PORT           int
 	DEBUG          bool
 	JWT_SECRET     string
+	DEV_MODE       bool
 }
 
 var config *Config
@@ -27,6 +28,7 @@ func Load() *Config {
 			PORT:           getEnvAsInt("PORT", 8081),
 			DEBUG:          getEnvAsBool("DEBUG", false),
 			JWT_SECRET:     getEnvAsString("JWT_SECRET", "supersecretkey"),
+			DEV_MODE:       getEnvAsBool("DEV_MODE", true),
 		}
 	}
 	return config
