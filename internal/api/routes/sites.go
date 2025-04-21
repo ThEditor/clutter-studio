@@ -7,12 +7,27 @@ import (
 	"github.com/ThEditor/clutter-studio/internal/api/common"
 	"github.com/ThEditor/clutter-studio/internal/api/middlewares"
 	"github.com/ThEditor/clutter-studio/internal/repository"
+	"github.com/ThEditor/clutter-studio/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
 type CreateRequest struct {
 	SiteUrl string `json:"site_url" validate:"required,url"`
+}
+
+type AnalyticsRequest struct {
+	From string `json:"from" validate:"YYYYMMDDdate"`
+	To   string `json:"to" validate:"YYYYMMDDdate"`
+}
+
+type AnalyticsResponse struct {
+	TopPages       []storage.PageStats     `json:"top_pages"`
+	DeviceStats    []storage.DeviceStats   `json:"device_stats"`
+	PageViews      int                     `json:"page_views"`
+	TopReferrers   []storage.ReferrerStats `json:"top_referrers"`
+	UniqueVisitors int                     `json:"unique_visitors"`
+	VisitorGraph   []storage.VisitorStats  `json:"visitor_graph"`
 }
 
 func SitesRouter(s *common.Server) http.Handler {
@@ -162,6 +177,14 @@ func SitesRouter(s *common.Server) http.Handler {
 			http.Error(w, "Invalid UUID", http.StatusBadRequest)
 			return
 		}
+		var req AnalyticsRequest
+		req.From = r.URL.Query().Get("from")
+		req.To = r.URL.Query().Get("to")
+
+		if err := common.Validate.Struct(req); err != nil {
+			http.Error(w, "Invalid query parameters: "+err.Error(), http.StatusBadRequest)
+			return
+		}
 
 		site, err := s.Repo.FindSiteByID(s.Ctx, siteId)
 
@@ -175,14 +198,56 @@ func SitesRouter(s *common.Server) http.Handler {
 			return
 		}
 
-		data, err := s.ClickHouse.GetSiteEventData(site.ID)
+		topPages, err := s.ClickHouse.GetTopPages(site.ID, 10)
 
-		if err != nil || data == nil {
+		if err != nil || topPages == nil {
 			http.Error(w, "Couldn't find analytics data for site", http.StatusNotFound)
 			return
 		}
 
-		json.NewEncoder(w).Encode(data)
+		deviceStats, err := s.ClickHouse.GetDeviceStats(site.ID)
+
+		if err != nil || deviceStats == nil {
+			http.Error(w, "Couldn't find analytics data for site", http.StatusNotFound)
+			return
+		}
+
+		pageViews, err := s.ClickHouse.GetPageViews(site.ID)
+
+		if err != nil {
+			http.Error(w, "Couldn't find analytics data for site", http.StatusNotFound)
+			return
+		}
+
+		topReferrers, err := s.ClickHouse.GetTopReferrers(site.ID, 10)
+
+		if err != nil || topReferrers == nil {
+			http.Error(w, "Couldn't find analytics data for site", http.StatusNotFound)
+			return
+		}
+
+		uniqueVisitors, err := s.ClickHouse.GetUniqueVisitors(site.ID)
+
+		if err != nil {
+			http.Error(w, "Couldn't find analytics data for site", http.StatusNotFound)
+			return
+		}
+
+		visitorGraph, err := s.ClickHouse.GetVisitorGraph(site.ID, req.From, req.To)
+
+		if err != nil || visitorGraph == nil {
+			http.Error(w, "Couldn't find analytics data for site", http.StatusNotFound)
+			return
+		}
+
+		json.NewEncoder(w).Encode(&AnalyticsResponse{
+			TopPages:       topPages,
+			DeviceStats:    deviceStats,
+			PageViews:      pageViews,
+			TopReferrers:   topReferrers,
+			UniqueVisitors: uniqueVisitors,
+			VisitorGraph:   visitorGraph,
+		})
 	})
 
 	return r
