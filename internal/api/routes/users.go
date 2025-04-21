@@ -13,7 +13,7 @@ func UsersRouter(s *common.Server) http.Handler {
 	r := chi.NewRouter()
 	r.Use(middlewares.AuthMiddleware)
 
-	r.Post("/me", func(w http.ResponseWriter, r *http.Request) {
+	r.Get("/me", func(w http.ResponseWriter, r *http.Request) {
 		claims, ok := r.Context().Value(middlewares.ClaimsKey).(*common.Claims)
 		if !ok {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
