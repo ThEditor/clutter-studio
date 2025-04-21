@@ -16,7 +16,10 @@ You can view the system design [here](https://www.figma.com/board/iSkI8Wf4Bg2ObJ
 ### Components
 
 #### Frame (Frontend Dashboard)
-- Under progress
+- Next.js web application that visualizes analytics data
+- Features:
+  - Site management dashboard
+  - Simple analytics data visualization with charts and metrics
 - Checkout the github repository [here](https://github.com/ThEditor/clutter-frame)
 
 #### Ink (Tracking Script) 
@@ -81,6 +84,8 @@ JWT_SECRET=secret
 
 # Paper
 DATABASE_URL=clickhouse://default:@localhost:9000/clutter
+REDIS_URL=redis://user:pass@localhost:6379
+POSTGRES_URL=postgres://user:pass@localhost:5432/db
 PORT=8080
 ```
 
