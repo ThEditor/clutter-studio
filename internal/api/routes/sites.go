@@ -13,7 +13,7 @@ import (
 )
 
 type CreateRequest struct {
-	SiteUrl string `json:"site_url" validate:"required,url"`
+	SiteUrl string `json:"site_url" validate:"required,fqdn,lowercase"`
 }
 
 type AnalyticsRequest struct {
