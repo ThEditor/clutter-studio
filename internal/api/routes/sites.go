@@ -182,7 +182,7 @@ func SitesRouter(s *common.Server) http.Handler {
 		req.To = r.URL.Query().Get("to")
 
 		if err := common.Validate.Struct(req); err != nil {
-			http.Error(w, "Invalid query parameters: "+err.Error(), http.StatusBadRequest)
+			http.Error(w, "Invalid query parameters", http.StatusBadRequest)
 			return
 		}
 
