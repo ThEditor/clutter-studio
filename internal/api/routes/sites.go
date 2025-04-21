@@ -60,6 +60,7 @@ func SitesRouter(s *common.Server) http.Handler {
 		}
 
 		json.NewEncoder(w).Encode(map[string]string{
+			"site_id": site.ID.String(),
 			"message": "Site " + site.SiteUrl + " added successfully!",
 		})
 	})
