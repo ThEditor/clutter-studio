@@ -101,5 +101,13 @@ func AuthRouter(s *common.Server) http.Handler {
 		})
 	})
 
+	r.Post("/logout", func(w http.ResponseWriter, r *http.Request) {
+		common.DetachJWTCookie(w)
+
+		json.NewEncoder(w).Encode(map[string]string{
+			"message": "Successfully logged out!",
+		})
+	})
+
 	return r
 }

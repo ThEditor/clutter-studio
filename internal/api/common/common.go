@@ -110,7 +110,23 @@ func AttachJWTCookie(w http.ResponseWriter, jwt string) {
 		MaxAge:   int(expirationDuration.Seconds()),
 		HttpOnly: true,
 		Secure:   !cfg.DEV_MODE,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: http.SameSiteStrictMode,
+	}
+
+	http.SetCookie(w, &cookie)
+}
+
+func DetachJWTCookie(w http.ResponseWriter) {
+	cfg := config.Get()
+
+	cookie := http.Cookie{
+		Name:     "accessToken",
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HttpOnly: true,
+		Secure:   !cfg.DEV_MODE,
+		SameSite: http.SameSiteStrictMode,
 	}
 
 	http.SetCookie(w, &cookie)
