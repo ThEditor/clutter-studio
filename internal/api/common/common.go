@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 	"time"
 
 	"github.com/ThEditor/clutter-studio/internal/config"
@@ -33,7 +34,15 @@ func CheckPasswordHash(passHash string, reqPass string) bool {
 	return bcrypt.CompareHashAndPassword([]byte(passHash), []byte(reqPass)) == nil
 }
 
+// Validator
+func IsYYYYMMDDDate(fl validator.FieldLevel) bool {
+	YYYYMMDDDateRegexString := "^(\\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$"
+	YYYYMMDDDateRegex := regexp.MustCompile(YYYYMMDDDateRegexString)
+	return YYYYMMDDDateRegex.MatchString(fl.Field().String())
+}
+
 var Validate = validator.New()
+var _ = Validate.RegisterValidation("YYYYMMDDdate", IsYYYYMMDDDate)
 
 const expirationDuration = 24 * time.Hour
 
