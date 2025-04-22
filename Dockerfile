@@ -6,7 +6,11 @@ COPY go.mod go.sum ./
 
 RUN go mod download
 
+RUN go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+
 COPY . ./
+
+RUN sqlc generate
 
 RUN go build -o clutter-studio ./cmd/app.go
 
