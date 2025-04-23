@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/ThEditor/clutter-studio/internal/api/common"
 	"github.com/ThEditor/clutter-studio/internal/api/routes"
@@ -14,6 +15,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/go-chi/httprate"
 )
 
 func Start(ctx context.Context, address string, port int, repo *repository.Queries, clickhouse *storage.ClickHouseStorage, mailer *mailer.Mailer) {
@@ -34,6 +36,7 @@ func Start(ctx context.Context, address string, port int, repo *repository.Queri
 		MaxAge:           300,
 	}))
 	r.Use(middleware.Logger)
+	r.Use(httprate.LimitByRealIP(100, time.Minute))
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hello World!"))
 	})

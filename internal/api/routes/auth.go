@@ -9,6 +9,7 @@ import (
 	"github.com/ThEditor/clutter-studio/internal/api/middlewares"
 	"github.com/ThEditor/clutter-studio/internal/repository"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/httprate"
 )
 
 type RegisterRequest struct {
@@ -28,6 +29,7 @@ type VerifyRequest struct {
 
 func AuthRouter(s *common.Server) http.Handler {
 	r := chi.NewRouter()
+	r.Use(httprate.LimitByIP(5, time.Minute))
 
 	r.Post("/register", func(w http.ResponseWriter, r *http.Request) {
 		var req RegisterRequest
@@ -117,7 +119,8 @@ func AuthRouter(s *common.Server) http.Handler {
 		})
 	})
 
-	r.With(middlewares.AuthWithoutEmailVerifiedMiddleware).
+	r.With(httprate.LimitByRealIP(1, time.Minute)).
+		With(middlewares.AuthWithoutEmailVerifiedMiddleware).
 		Post("/generate-code", func(w http.ResponseWriter, r *http.Request) {
 			claims, ok := r.Context().Value(middlewares.ClaimsKey).(*common.Claims)
 			if !ok {
