@@ -11,28 +11,35 @@ import (
 
 func UsersRouter(s *common.Server) http.Handler {
 	r := chi.NewRouter()
-	r.Use(middlewares.AuthMiddleware)
 
-	r.Get("/me", func(w http.ResponseWriter, r *http.Request) {
-		claims, ok := r.Context().Value(middlewares.ClaimsKey).(*common.Claims)
-		if !ok {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
+	// endpoint for basic user info
+	r.With(middlewares.AuthWithoutEmailVerifiedMiddleware).
+		Get("/me", func(w http.ResponseWriter, r *http.Request) {
+			claims, ok := r.Context().Value(middlewares.ClaimsKey).(*common.Claims)
+			if !ok {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
 
-		user, err := s.Repo.FindUserByID(s.Ctx, claims.UserID)
-		if err != nil {
-			http.Error(w, "Cannot find user", http.StatusInternalServerError)
-			return
-		}
+			user, err := s.Repo.FindUserByID(s.Ctx, claims.UserID)
+			if err != nil {
+				http.Error(w, "Cannot find user", http.StatusInternalServerError)
+				return
+			}
 
-		json.NewEncoder(w).Encode(map[string]string{
-			"id":         user.ID.String(),
-			"username":   user.Username,
-			"email":      user.Email,
-			"created_at": user.CreatedAt.String(),
-			"updated_at": user.UpdatedAt.String(),
+			json.NewEncoder(w).Encode(map[string]any{
+				"id":             user.ID,
+				"username":       user.Username,
+				"email":          user.Email,
+				"email_verified": user.EmailVerified,
+				"created_at":     user.CreatedAt,
+				"updated_at":     user.UpdatedAt,
+			})
 		})
+
+	r.Group(func(r chi.Router) {
+		r.Use(middlewares.AuthMiddleware)
+		// other endpoints
 	})
 
 	return r
