@@ -2,12 +2,14 @@ package common
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 	"net/http"
 	"regexp"
 	"time"
 
 	"github.com/ThEditor/clutter-studio/internal/config"
+	"github.com/ThEditor/clutter-studio/internal/mailer"
 	"github.com/ThEditor/clutter-studio/internal/repository"
 	"github.com/ThEditor/clutter-studio/internal/storage"
 	"github.com/go-playground/validator/v10"
@@ -20,6 +22,7 @@ type Server struct {
 	Ctx        context.Context
 	Repo       *repository.Queries
 	ClickHouse *storage.ClickHouseStorage
+	Mailer     *mailer.Mailer
 }
 
 func HashPassword(pass string) (string, error) {
@@ -32,6 +35,24 @@ func HashPassword(pass string) (string, error) {
 
 func CheckPasswordHash(passHash string, reqPass string) bool {
 	return bcrypt.CompareHashAndPassword([]byte(passHash), []byte(reqPass)) == nil
+}
+
+// Email verification
+func GenerateRandomCode(n int) string {
+	const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+	b := make([]byte, n)
+	rand.Read(b)
+
+	for i := range b {
+		b[i] = letters[int(b[i])%len(letters)]
+	}
+
+	return string(b)
+}
+
+func SendVerificationMail(mailer mailer.Mailer, to string, code string) error {
+	return mailer.Send([]string{to}, "Clutter Verification Code", "Your verification code for Clutter Analytics is: "+code)
 }
 
 // Validator
@@ -49,18 +70,20 @@ const expirationDuration = 24 * time.Hour
 // JWT
 
 type Claims struct {
-	UserID uuid.UUID `json:"user_id"`
-	Email  string    `json:"email"`
+	UserID        uuid.UUID `json:"user_id"`
+	Email         string    `json:"email"`
+	EmailVerified bool      `json:"email_verified"`
 	jwt.RegisteredClaims
 }
 
-func CreateJWT(userID uuid.UUID, email string) (string, error) {
+func CreateJWT(userID uuid.UUID, email string, verified bool) (string, error) {
 	cfg := config.Get()
 	expirationTime := time.Now().Add(expirationDuration)
 
 	claims := &Claims{
-		UserID: userID,
-		Email:  email,
+		UserID:        userID,
+		Email:         email,
+		EmailVerified: verified,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

@@ -8,6 +8,7 @@ import (
 	"github.com/ThEditor/clutter-studio/internal/api/common"
 	"github.com/ThEditor/clutter-studio/internal/api/routes"
 	"github.com/ThEditor/clutter-studio/internal/log"
+	"github.com/ThEditor/clutter-studio/internal/mailer"
 	"github.com/ThEditor/clutter-studio/internal/repository"
 	"github.com/ThEditor/clutter-studio/internal/storage"
 	"github.com/go-chi/chi/v5"
@@ -15,11 +16,12 @@ import (
 	"github.com/go-chi/cors"
 )
 
-func Start(ctx context.Context, address string, port int, repo *repository.Queries, clickhouse *storage.ClickHouseStorage) {
+func Start(ctx context.Context, address string, port int, repo *repository.Queries, clickhouse *storage.ClickHouseStorage, mailer *mailer.Mailer) {
 	s := &common.Server{
 		Ctx:        ctx,
 		Repo:       repo,
 		ClickHouse: clickhouse,
+		Mailer:     mailer,
 	}
 
 	r := chi.NewRouter()

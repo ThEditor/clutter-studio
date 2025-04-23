@@ -14,3 +14,6 @@ RETURNING *;
 
 -- name: UpdateUserPassword :exec
 UPDATE users SET passHash = $1 WHERE id = $2;
+
+-- name: UpdateEmailVerificationStatus :exec
+UPDATE users SET email_verified = $1 WHERE id = $2;

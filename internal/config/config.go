@@ -14,6 +14,11 @@ type Config struct {
 	DEBUG          bool
 	JWT_SECRET     string
 	DEV_MODE       bool
+	SMTP_HOST      string
+	SMTP_PORT      int
+	SMTP_FROM      string
+	SMTP_USERNAME  string
+	SMTP_PASSWORD  string
 }
 
 var config *Config
@@ -29,6 +34,11 @@ func Load() *Config {
 			DEBUG:          getEnvAsBool("DEBUG", false),
 			JWT_SECRET:     getEnvAsString("JWT_SECRET", "supersecretkey"),
 			DEV_MODE:       getEnvAsBool("DEV_MODE", true),
+			SMTP_HOST:      getEnvAsString("SMTP_HOST", ""),
+			SMTP_PORT:      getEnvAsInt("SMTP_PORT", 587),
+			SMTP_FROM:      getEnvAsString("SMTP_FROM", ""),
+			SMTP_USERNAME:  getEnvAsString("SMTP_USERNAME", ""),
+			SMTP_PASSWORD:  getEnvAsString("SMTP_PASSWORD", ""),
 		}
 	}
 	return config

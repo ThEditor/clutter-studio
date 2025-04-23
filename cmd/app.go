@@ -5,6 +5,7 @@ import (
 
 	"github.com/ThEditor/clutter-studio/internal/api"
 	"github.com/ThEditor/clutter-studio/internal/config"
+	"github.com/ThEditor/clutter-studio/internal/mailer"
 	"github.com/ThEditor/clutter-studio/internal/repository"
 	"github.com/ThEditor/clutter-studio/internal/storage"
 )
@@ -27,5 +28,17 @@ func main() {
 	}
 	defer chstore.Close()
 
-	api.Start(ctx, cfg.BIND_ADDRESS, cfg.PORT, repo, chstore)
+	mailer, err := mailer.NewMailer(mailer.MailerConfig{
+		Host:     cfg.SMTP_HOST,
+		Port:     cfg.SMTP_PORT,
+		From:     cfg.SMTP_FROM,
+		Username: cfg.SMTP_USERNAME,
+		Password: cfg.SMTP_PASSWORD,
+	})
+	if err != nil {
+		panic(err)
+	}
+	defer mailer.Close()
+
+	api.Start(ctx, cfg.BIND_ADDRESS, cfg.PORT, repo, chstore, mailer)
 }

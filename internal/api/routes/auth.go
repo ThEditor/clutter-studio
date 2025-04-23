@@ -3,8 +3,10 @@ package routes
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/ThEditor/clutter-studio/internal/api/common"
+	"github.com/ThEditor/clutter-studio/internal/api/middlewares"
 	"github.com/ThEditor/clutter-studio/internal/repository"
 	"github.com/go-chi/chi/v5"
 )
@@ -18,6 +20,10 @@ type RegisterRequest struct {
 type LoginRequest struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required,min=6"`
+}
+
+type VerifyRequest struct {
+	Code string `json:"code" validate:"required,min=6,max=6"`
 }
 
 func AuthRouter(s *common.Server) http.Handler {
@@ -52,7 +58,17 @@ func AuthRouter(s *common.Server) http.Handler {
 			return
 		}
 
-		jwt, err := common.CreateJWT(user.ID, user.Email)
+		verifyCode, err := s.Repo.CreateVerificationCode(s.Ctx, repository.CreateVerificationCodeParams{
+			UserID:    user.ID,
+			Code:      common.GenerateRandomCode(6),
+			ExpiresAt: time.Now().Add(time.Hour),
+		})
+
+		if err == nil {
+			common.SendVerificationMail(*s.Mailer, user.Email, verifyCode.Code)
+		}
+
+		jwt, err := common.CreateJWT(user.ID, user.Email, user.EmailVerified)
 
 		if err != nil {
 			http.Error(w, "Failed creating JWT", http.StatusInternalServerError)
@@ -86,7 +102,7 @@ func AuthRouter(s *common.Server) http.Handler {
 			return
 		}
 
-		jwt, err := common.CreateJWT(user.ID, user.Email)
+		jwt, err := common.CreateJWT(user.ID, user.Email, user.EmailVerified)
 
 		if err != nil {
 			http.Error(w, "Failed creating JWT", http.StatusInternalServerError)
@@ -100,6 +116,113 @@ func AuthRouter(s *common.Server) http.Handler {
 			"access_token": jwt,
 		})
 	})
+
+	r.With(middlewares.AuthWithoutEmailVerifiedMiddleware).
+		Post("/generate-code", func(w http.ResponseWriter, r *http.Request) {
+			claims, ok := r.Context().Value(middlewares.ClaimsKey).(*common.Claims)
+			if !ok {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			user, err := s.Repo.FindUserByID(s.Ctx, claims.UserID)
+			if err != nil {
+				http.Error(w, "Cannot find user", http.StatusInternalServerError)
+				return
+			}
+
+			if user.EmailVerified {
+				http.Error(w, "User already has email verified", http.StatusBadRequest)
+				return
+			}
+
+			verifyCode, err := s.Repo.CreateVerificationCode(s.Ctx, repository.CreateVerificationCodeParams{
+				UserID:    user.ID,
+				Code:      common.GenerateRandomCode(6),
+				ExpiresAt: time.Now().Add(time.Hour),
+			})
+
+			if err != nil {
+				http.Error(w, "Failed to create verification code", http.StatusInternalServerError)
+				return
+			}
+
+			err = common.SendVerificationMail(*s.Mailer, user.Email, verifyCode.Code)
+
+			if err != nil {
+				http.Error(w, "Failed to create verification code", http.StatusInternalServerError)
+				return
+			}
+
+			json.NewEncoder(w).Encode(map[string]string{
+				"message": "Successfully generated code!",
+			})
+		})
+
+	r.With(middlewares.AuthWithoutEmailVerifiedMiddleware).
+		Post("/verify", func(w http.ResponseWriter, r *http.Request) {
+			var req VerifyRequest
+			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+				http.Error(w, "Invalid JSON", http.StatusBadRequest)
+				return
+			}
+
+			if err := common.Validate.Struct(req); err != nil {
+				http.Error(w, "Invalid JSON", http.StatusBadRequest)
+				return
+			}
+
+			claims, ok := r.Context().Value(middlewares.ClaimsKey).(*common.Claims)
+			if !ok {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+
+			user, err := s.Repo.FindUserByID(s.Ctx, claims.UserID)
+			if err != nil {
+				http.Error(w, "Cannot find user", http.StatusInternalServerError)
+				return
+			}
+
+			if user.EmailVerified {
+				http.Error(w, "User already has email verified", http.StatusBadRequest)
+				return
+			}
+
+			valid, err := s.Repo.IsVerificationCodeValid(s.Ctx, repository.IsVerificationCodeValidParams{
+				UserID: user.ID,
+				Code:   req.Code,
+			})
+			if err != nil || !valid {
+				http.Error(w, "Invalid code", http.StatusBadRequest)
+				return
+			}
+
+			err = s.Repo.UpdateEmailVerificationStatus(s.Ctx, repository.UpdateEmailVerificationStatusParams{
+				ID:            user.ID,
+				EmailVerified: true,
+			})
+			if err != nil {
+				http.Error(w, "Failed to update email verification status", http.StatusInternalServerError)
+				return
+			}
+
+			s.Repo.DeleteVerificationCodes(s.Ctx, user.ID)
+
+			jwt, err := common.CreateJWT(user.ID, user.Email, true)
+
+			if err != nil {
+				http.Error(w, "Failed creating JWT", http.StatusInternalServerError)
+				return
+			}
+
+			common.AttachJWTCookie(w, jwt)
+
+			json.NewEncoder(w).Encode(map[string]string{
+				"message":      "Successfully verified email!",
+				"access_token": jwt,
+			})
+		})
 
 	r.Post("/logout", func(w http.ResponseWriter, r *http.Request) {
 		common.DetachJWTCookie(w)

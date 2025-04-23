@@ -12,7 +12,7 @@ type contextKey string
 
 const ClaimsKey contextKey = "claims"
 
-func AuthMiddleware(next http.Handler) http.Handler {
+func baseAuthMiddleware(next http.Handler, requireEmailVerification bool) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("accessToken")
 
@@ -34,7 +34,20 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
+		if requireEmailVerification && !claims.EmailVerified {
+			http.Error(w, "Email not verified", http.StatusUnauthorized)
+			return
+		}
+
 		ctx := context.WithValue(r.Context(), ClaimsKey, claims)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+func AuthWithoutEmailVerifiedMiddleware(next http.Handler) http.Handler {
+	return baseAuthMiddleware(next, false)
+}
+
+func AuthMiddleware(next http.Handler) http.Handler {
+	return baseAuthMiddleware(next, true)
 }
